@@ -14,20 +14,48 @@ order_book.add_order(Order('sell', price=105, quantity=3))
 order_book.add_order(Order('sell', price=106, quantity=3))
 
 # Simulate a new incoming order
-incoming_order = Order('buy', price=105, quantity=2)
-trades = engine.match_order(incoming_order)
+def print_trades(trades):
+    if not trades:
+        print("No trades were executed.")
+    else:
+        print("Executed trades:")
+        for i, (resting_order_id, incoming_order_id, price, quantity) in enumerate(trades, start=1):
+            print(
+                f"  {i}. Resting Order #{resting_order_id} matched with "
+                f"Incoming Order #{incoming_order_id} | "
+                f"Price: {price} | Quantity: {quantity}"
+            )
 
-# Print trades in a user-friendly format
-if not trades:
-    print("No trades were executed.")
-else:
-    print("Executed trades:")
-    for i, (resting_order_id, incoming_order_id, price, quantity) in enumerate(trades, start=1):
-        print(
-            f"  {i}. Resting Order #{resting_order_id} matched with "
-            f"Incoming Order #{incoming_order_id} | "
-            f"Price: {price} | Quantity: {quantity}"
-        )
+def print_order_book():
+    print("\nOrder Book:")
+    print("Bids:")
+    for price, level in reversed(order_book.bids.items()):
+        qty = sum(order.quantity for order in level.orders)
+        print(f"  Price: {price} | Quantity: {qty}")
+    print("Asks:")
+    for price, level in order_book.asks.items():
+        qty = sum(order.quantity for order in level.orders)
+        print(f"  Price: {price} | Quantity: {qty}")
+    print()
 
-# Print order book state
-print(order_book)
+def main():
+    print("Exchange Server Started. Enter orders (buy/sell) or 'exit' to quit.")
+    print ("Example input: 'buy 101 10' or 'sell 99 5'")
+    while True:
+        cmd = input("Order (buy/sell) [side price quantity] or 'exit': ").strip()
+        if cmd.lower() == 'exit':
+            break
+        try:
+            side, price, quantity = cmd.split()
+            price = float(price)
+            quantity = int(quantity)
+            order = Order(side, price=price, quantity=quantity)
+            order_book.add_order(order)
+            trades = engine.match_order(order)
+            print_trades(trades)
+            print_order_book()
+        except Exception as e:
+            print(f"Invalid input or error: {e}")
+
+if __name__ == "__main__":
+    main()
