@@ -17,7 +17,7 @@ flowchart LR
     API --> Auth
 ```
 
-## Important desgin points
+## Important design points
 
 * Order book: The order book’s data structure directly affects matching speed, scalability, and correctness. (heap or balanced binary search tree)
 * Matching engine: Drives the core logic for proccessing trades.
