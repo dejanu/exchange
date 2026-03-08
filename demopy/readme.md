@@ -13,7 +13,7 @@ It consists of four main components:
 The design uses efficient data structures (`SortedDict`, `deque`) to ensure fast order insertion, retrieval, and matching.  
 This forms the foundation for a simple, performant exchange suitable for demo and educational purposes.
 
-The current implementation allows trading a single asses. The order class does not implement a symbol filed and no separate order books are implemented currently.
+The current implementation allows trading a single asset. The order class does not implement a symbol filed and no separate order books are implemented currently.
 
 ---
 
