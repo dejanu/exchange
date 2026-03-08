@@ -1,5 +1,7 @@
 # Exchange App Architecture
 
+Article [Trading Exchange: The building blocks](https://dejanualex.medium.com/trading-exchange-736161968260)
+
 **Components:**
 - Frontend: UI (React/Vue/HTML)
 - REST API: Handles HTTP requests, routes, and business logic.
