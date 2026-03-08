@@ -9,9 +9,9 @@ order_book = OrderBook()
 engine = MatchingEngine(order_book)
 
 # Add some limit orders
-order_book.add_order(Order('buy', price=100, quantity=5))
-order_book.add_order(Order('sell', price=105, quantity=3))
-order_book.add_order(Order('sell', price=106, quantity=3))
+#order_book.add_order(Order('buy', price=100, quantity=5))
+order_book.add_order(Order('sell', price=102, quantity=4))
+order_book.add_order(Order('sell', price=104, quantity=3))
 
 # Simulate a new incoming order
 def print_trades(trades):
