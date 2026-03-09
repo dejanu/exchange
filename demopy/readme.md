@@ -32,4 +32,8 @@ source .demovevn/bin/activate
 
 # docker
 docker run -p 5000:5000 dejanualex/exchange:1.0
+
+# run unit tests
+python -m unittest -v test_exchange.py
+
 ```

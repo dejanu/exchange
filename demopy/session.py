@@ -29,7 +29,7 @@ def print_trades(trades):
 def print_order_book():
     print("\nOrder Book:")
     print("Bids:")
-    for price, level in reversed(order_book.bids.items()):
+    for price, level in order_book.bids.items():
         qty = sum(order.quantity for order in level.orders)
         print(f"  Price: {price} | Quantity: {qty}")
     print("Asks:")
@@ -50,8 +50,9 @@ def main():
             price = float(price)
             quantity = int(quantity)
             order = Order(side, price=price, quantity=quantity)
-            order_book.add_order(order)
             trades = engine.match_order(order)
+            if order.quantity > 0 and order.price is not None:
+                order_book.add_order(order)
             print_trades(trades)
             print_order_book()
         except Exception as e:

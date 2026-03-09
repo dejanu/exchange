@@ -19,20 +19,30 @@ class MatchingEngine:
             # else: market order or price allows match
 
             level = opposite[best_price]
-            resting_order = level.pop_order()
+            if level.is_empty():
+                del opposite[best_price]
+                continue
+
+            resting_order = level.orders[0]
+            if resting_order.quantity <= 0:
+                level.pop_order()
+                if level.is_empty():
+                    del opposite[best_price]
+                continue
+
             traded_qty = min(order.quantity, resting_order.quantity)
+            if traded_qty <= 0:
+                break
+
             order.quantity -= traded_qty
             resting_order.quantity -= traded_qty
 
             trades.append((resting_order.id, order.id, best_price, traded_qty))
 
-            # partial order match: If resting order still has quantity, re-add it to the price level
-            if resting_order.quantity > 0:
-                level.add_order(resting_order)
+            if resting_order.quantity == 0:
+                level.pop_order()
 
-            if not level.is_empty():
-                opposite[best_price] = level
-            else:
+            if level.is_empty():
                 del opposite[best_price]  # remove empty price level
 
         return trades

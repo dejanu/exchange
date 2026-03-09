@@ -1,0 +1,11 @@
+.git
+.gitignore
+.demovevn/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+test_*.py
+readme.md
+Readme.md
+Dockerfile

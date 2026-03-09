@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exchange Demo</title>
+    <style>
+        body { font-family: Arial; margin: 2em; }
+        .center-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .order-form { margin-bottom: 2em; }
+        .scenario-helper { margin-bottom: 2em; width: 100%; max-width: 700px; }
+        .scenario-helper select { margin-top: 0.5em; width: 100%; }
+        .scenario-details { margin-top: 0.75em; text-align: left; }
+        .scenario-details ul { margin-top: 0.5em; }
+        .order-book, .trades { margin-top: 2em; }
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 4px 8px; }
+    </style>
+</head>
+<body>
+    <div class="center-container">
+        <h1>Exchange Demo</h1>
+        <div class="scenario-helper">
+            <h2>Scenario Helper</h2>
+            <label for="scenarioSelect">Select a scenario to run manually:</label>
+            <select id="scenarioSelect"></select>
+            <div id="scenarioDetails" class="scenario-details"></div>
+        </div>
+        <div class="order-form">
+            <form id="orderForm">
+                <label>Side:
+                    <select name="side">
+                        <option value="buy">Buy</option>
+                        <option value="sell">Sell</option>
+                    </select>
+                </label>
+                <label>Price: <input type="number" step="0.01" name="price" required></label>
+                <label>Quantity: <input type="number" name="quantity" required></label>
+                <button type="submit">Submit Order</button>
+            </form>
+            <div id="result"></div>
+        </div>
+        <div class="order-book">
+            <h2>Order Book</h2>
+            <div id="orderBook"></div>
+        </div>
+        <div class="trades">
+            <h2>Trade History</h2>
+            <div id="trades"></div>
+        </div>
+    </div>
+<script>
+    const scenarios = [
+        {
+            name: "Full match with exact quantity",
+            orders: [
+                "buy @ 50 qty 100",
+                "sell @ 50 qty 100"
+            ],
+            expected: "Trade executes for 100 @ 50. Both orders are fully filled."
+        },
+        {
+            name: "Partial fill - incoming order larger",
+            orders: [
+                "sell @ 45 qty 50",
+                "buy @ 45 qty 100"
+            ],
+            expected: "Trade executes for 50 @ 45. Buy order has 50 remaining on the book."
+        },
+        {
+            name: "Partial fill - resting order larger",
+            orders: [
+                "buy @ 48 qty 100",
+                "sell @ 48 qty 50"
+            ],
+            expected: "Trade executes for 50 @ 48. Buy order has 50 remaining on the book."
+        },
+        {
+            name: "FIFO priority at same price",
+            orders: [
+                "buy @ 50 qty 50 (Bid A)",
+                "buy @ 50 qty 50 (Bid B)",
+                "sell @ 50 qty 75"
+            ],
+            expected: "Bid A fills first (50), then Bid B fills 25 and leaves 25 on the book."
+        },
+        {
+            name: "Best price priority",
+            orders: [
+                "buy @ 49 qty 100",
+                "buy @ 50 qty 100",
+                "sell @ 49 qty 150"
+            ],
+            expected: "Higher bid (50) matches first for 100, then bid 49 matches 50."
+        },
+        {
+            name: "Market order sweeping the book",
+            orders: [
+                "sell @ 51 qty 40",
+                "sell @ 52 qty 60",
+                "buy market qty 100"
+            ],
+            expected: "Market buy fills 40 @ 51 and 60 @ 52.",
+            note: "Current form requires a price, so market orders are not available in the browser form yet."
+        },
+        {
+            name: "Market order with no liquidity",
+            orders: [
+                "buy market qty 100"
+            ],
+            expected: "No trades execute.",
+            note: "Current form requires a price, so market orders are not available in the browser form yet."
+        },
+        {
+            name: "Invalid order side",
+            orders: [
+                "submit order with side not equal to buy/sell"
+            ],
+            expected: "Order should be rejected and book should remain unchanged.",
+            note: "UI dropdown only allows buy/sell. Use API tools if you want to test invalid side input."
+        }
+    ];
+
+    function renderScenario(index) {
+        const scenario = scenarios[index];
+        if (!scenario) {
+            document.getElementById("scenarioDetails").innerHTML = "";
+            return;
+        }
+
+        const orderItems = scenario.orders
+            .map((order, i) => `<li>${i + 1}. ${order}</li>`)
+            .join("");
+
+        let html = `<strong>${scenario.name}</strong>`;
+        html += `<ul>${orderItems}</ul>`;
+        html += `<div><strong>Expected:</strong> ${scenario.expected}</div>`;
+        if (scenario.note) {
+            html += `<div><strong>Note:</strong> ${scenario.note}</div>`;
+        }
+        document.getElementById("scenarioDetails").innerHTML = html;
+    }
+
+    function setupScenarios() {
+        const select = document.getElementById("scenarioSelect");
+        scenarios.forEach((scenario, index) => {
+            const option = document.createElement("option");
+            option.value = index;
+            option.textContent = scenario.name;
+            select.appendChild(option);
+        });
+        select.onchange = function() {
+            renderScenario(parseInt(select.value, 10));
+        };
+        renderScenario(0);
+    }
+
+function renderOrderBook(data) {
+    let html = "<table><tr><th>Bids</th><th>Asks</th></tr>";
+    let maxLen = Math.max(data.bids.length, data.asks.length);
+    for (let i = 0; i < maxLen; i++) {
+        let bid = data.bids[i] || ["", ""];
+        let ask = data.asks[i] || ["", ""];
+        html += `<tr><td>${bid[0]} (${bid[1]})</td><td>${ask[0]} (${ask[1]})</td></tr>`;
+    }
+    html += "</table>";
+    document.getElementById("orderBook").innerHTML = html;
+}
+function renderTrades(trades) {
+    if (trades.length === 0) {
+        document.getElementById("trades").innerHTML = "<em>No trades yet.</em>";
+        return;
+    }
+    let html = "<table><tr><th>#</th><th>Resting Order</th><th>Incoming Order</th><th>Price</th><th>Quantity</th></tr>";
+    trades.forEach((t, i) => {
+        html += `<tr><td>${i+1}</td><td>${t[0]}</td><td>${t[1]}</td><td>${t[2]}</td><td>${t[3]}</td></tr>`;
+    });
+    html += "</table>";
+    document.getElementById("trades").innerHTML = html;
+}
+function refresh() {
+    fetch("/orderbook").then(r => r.json()).then(renderOrderBook);
+    fetch("/trades").then(r => r.json()).then(renderTrades);
+}
+document.getElementById("orderForm").onsubmit = function(e) {
+    e.preventDefault();
+    let form = e.target;
+    let data = {
+        side: form.side.value,
+        price: form.price.value,
+        quantity: form.quantity.value
+    };
+    fetch("/order", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(resp => {
+        document.getElementById("result").innerText = resp.message;
+        refresh();
+    });
+};
+setupScenarios();
+refresh();
+</script>
+</body>
+</html>

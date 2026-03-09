@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run exchange tests",
+			"type": "shell",
+			"command": "/Users/dej/Desktop/Git_projects/exchange/demopy/.demovevn/bin/python",
+			"args": [
+				"-m",
+				"unittest",
+				"-v",
+				"test_exchange.py"
+			],
+			"isBackground": false
+		}
+	]
+}

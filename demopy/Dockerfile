@@ -7,8 +7,13 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all source files
-COPY . .
+# Copy only runtime source files
+COPY web.py ./
+COPY order.py ./
+COPY orderbook.py ./
+COPY price.py ./
+COPY matchingengine.py ./
+COPY templates ./templates
 
 # Expose Flask default port
 EXPOSE 5000
