@@ -31,7 +31,7 @@ source .demovevn/bin/activate
 ./web.py
 
 # docker
-docker run -p 5000:5000 dejanualex/exchange:1.0
+docker run -p 5000:5000 dejanualex/exchange:1.1
 
 # run unit tests
 python -m unittest -v test_exchange.py
